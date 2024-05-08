@@ -1,0 +1,30 @@
+version: '3.9'
+
+networks:
+  internal:
+    name: "infranet"
+
+services:
+  chat:
+    build: 
+      context: ./chatbot
+      dockerfile: Dockerfile
+    env_file:
+      - ./chatbot/envs
+    volumes:
+      - ./chatbot/models/q4_0-orca-mini-3b.gguf:/app/models/model.gguf
+    networks:
+      - internal
+    expose:
+      - 8080:8080
+    ports:
+      - 8080:8080
+  
+  client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    env_file:
+      - ./client/envs
+    networks:
+      - internal
