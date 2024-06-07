@@ -41,10 +41,10 @@ services:
    build: 
      context: ./client
      dockerfile: Dockerfile
-   tmpfs: ${PWD}/shared
+   tmpfs: 
+    - /run/shared:size=100000
    volumes:
-     - ./client/stt:/app/stt
-     - ./shared:/app/files
+     - /run/shared:/app/files
    env_file:
      - ./client/envs
    devices:

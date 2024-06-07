@@ -3,13 +3,22 @@ import numpy as np
 import requests
 import webrtcvad
 
+import os
 
-CHUNK_SIZE=480
+SAMPLE_RATE=int(os.environ.get("SAMPLE_RATE"))
+
+CHUNK_SIZE=int(SAMPLE_RATE*0.02)
+
+DEVICE_MIC_ID=int(os.environ.get("DEVICE_MIC_ID"))
+
+DEVICE_SPEAK_ID=int(os.environ.get("DEVICE_SPEAK_ID"))
 
 MAX_BUFFER_SIZE=480000
 
+AUDIO_BUFFER_PATH="/app/files/audio.wav"
+
 class Microphone:
-    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=48000,id=1):
+    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=SAMPLE_RATE,id=DEVICE_MIC_ID):
 
         '''init input audio device'''
         self.audio=pyaudio.PyAudio()
@@ -60,7 +69,7 @@ class Microphone:
 
 class Speaker:
 
-    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=16000,id=0):
+    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=SAMPLE_RATE,id=DEVICE_SPEAK_ID):
 
         self.audio=pyaudio.PyAudio()
         self.open_stream(format,channels,rate,chunk,id)
@@ -113,7 +122,9 @@ class AudioBuffer:
     def clear(self):
         self.buffer=np.array([])
 
-mic=Microphone(480)    
+mic=Microphone(CHUNK_SIZE)
+
+speaker=Speaker(CHUNK_SIZE)    
 
 audio_buffer=np.array([])
 
@@ -131,4 +142,12 @@ while True:
         audio_buffer = np.append(audio_buffer,audio_input)
     elif recording:
         recording=False
-        # run Speech to Text model and send it to chatbot
+        # push everything into wav file in ram disk
+        
+        # run Speech to Text
+        
+        # run chatbot
+        
+        # run piper tts
+        
+        # play sample
