@@ -2,9 +2,12 @@ import pyaudio
 import numpy as np
 import requests
 import webrtcvad
+import whisper
 
 
 CHUNK_SIZE=4096
+
+MAX_BUFFER_SIZE=480000
 
 class Microphone:
     def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=16000,id=0):
@@ -116,15 +119,17 @@ mic=Microphone(4096)
 audio_buffer=np.array([])
 
 recording=False
+
         
 while True:
     
     # get audio sample
     audio_input=mic.get()
     
-    if audio_input is not None:
+    if audio_input is not None and len(audio_buffer)<MAX_BUFFER_SIZE:
         recording=True
         # append to audio buffer
+        audio_buffer = np.append(audio_buffer,audio_input)
     elif recording:
         recording=False
         # run Speech to Text model and send it to chatbot

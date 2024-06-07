@@ -9,6 +9,7 @@ services:
     build: 
       context: ./chatbot
       dockerfile: Dockerfile
+    platform: linux/amd64
     env_file:
       - ./chatbot/envs
     volumes:
@@ -19,12 +20,30 @@ services:
       - 8080:8080
     ports:
       - 8080:8080
-  
-  client:
+
+  stt:
     build: 
-      context: ./client
+      context: ./stt
       dockerfile: Dockerfile
+    platform: linux/amd64
     env_file:
-      - ./client/envs
+      - ./stt/envs
+    volumes:
+      - ./stt/models/ggml-tiny-q5_1.bin:/app/models/model.bin
     networks:
       - internal
+    expose:
+      - 8080:8080
+    ports:
+      - 8081:8080
+  
+  #client:
+  #  build: 
+  #    context: ./client
+  #    dockerfile: Dockerfile
+  #  volumes:
+  #    - ./client/stt:/app/stt
+  #  env_file:
+  #    - ./client/envs
+  #  networks:
+  #    - internal
