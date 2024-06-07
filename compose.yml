@@ -37,13 +37,17 @@ services:
     ports:
       - 8081:8080
   
-  #client:
-  #  build: 
-  #    context: ./client
-  #    dockerfile: Dockerfile
-  #  volumes:
-  #    - ./client/stt:/app/stt
-  #  env_file:
-  #    - ./client/envs
-  #  networks:
-  #    - internal
+  client:
+   build: 
+     context: ./client
+     dockerfile: Dockerfile
+   tmpfs: ${PWD}/shared
+   volumes:
+     - ./client/stt:/app/stt
+     - ./shared:/app/files
+   env_file:
+     - ./client/envs
+   devices:
+     - /dev/snd:/dev/snd
+   networks:
+     - internal

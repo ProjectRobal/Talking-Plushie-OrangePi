@@ -2,15 +2,14 @@ import pyaudio
 import numpy as np
 import requests
 import webrtcvad
-import whisper
 
 
-CHUNK_SIZE=4096
+CHUNK_SIZE=480
 
 MAX_BUFFER_SIZE=480000
 
 class Microphone:
-    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=16000,id=0):
+    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=48000,id=1):
 
         '''init input audio device'''
         self.audio=pyaudio.PyAudio()
@@ -114,7 +113,7 @@ class AudioBuffer:
     def clear(self):
         self.buffer=np.array([])
 
-mic=Microphone(4096)    
+mic=Microphone(480)    
 
 audio_buffer=np.array([])
 
