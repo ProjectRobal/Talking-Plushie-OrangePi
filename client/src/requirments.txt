@@ -3,3 +3,4 @@ requests
 numpy
 pyaudio
 webrtcvad
+scipy

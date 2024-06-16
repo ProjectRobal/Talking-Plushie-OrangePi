@@ -2,6 +2,10 @@ import pyaudio
 import numpy as np
 import requests
 import webrtcvad
+from scipy.io.wavfile import write
+import scipy.signal as sps
+
+import time
 
 import os
 
@@ -16,6 +20,8 @@ DEVICE_SPEAK_ID=int(os.environ.get("DEVICE_SPEAK_ID"))
 MAX_BUFFER_SIZE=480000
 
 AUDIO_BUFFER_PATH="/app/files/audio.wav"
+
+STT_URL = "http://stt:8080/inference"
 
 class Microphone:
     def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=SAMPLE_RATE,id=DEVICE_MIC_ID):
@@ -52,6 +58,7 @@ class Microphone:
         frame=self.stream.read(self.chunk,exception_on_overflow = False)
 
         if self.vad.is_speech(frame,self.rate):
+            print("Speech detected in frame")
             return np.frombuffer(frame,dtype=np.int16)
 
         return None
@@ -122,14 +129,23 @@ class AudioBuffer:
     def clear(self):
         self.buffer=np.array([])
 
+
+def resample_to_16(clip):
+    
+    number_of_samples = round(len(clip) * float(16000) / SAMPLE_RATE)
+
+    clip = sps.resample(clip, number_of_samples).astype(np.int16)
+
+    return clip
+
 mic=Microphone(CHUNK_SIZE)
 
 speaker=Speaker(CHUNK_SIZE)    
 
-audio_buffer=np.array([])
+audio_buffer=np.array([]).astype(np.int16)
 
 recording=False
-
+        
         
 while True:
     
@@ -144,8 +160,40 @@ while True:
         recording=False
         # push everything into wav file in ram disk
         
-        # run Speech to Text
+        buffer = audio_buffer.astype(np.int16)
         
+        
+        
+        buffer = resample_to_16(buffer)
+
+        audio_length = int(len(buffer)*1000/16000)
+        
+        if audio_length < 1000:
+            frames_to_add = 1000 - audio_length
+            
+            dummy_buff = np.zeros(int((frames_to_add+10/1000)*16000)).astype(np.int16)
+            
+            buffer = np.append(buffer,dummy_buff)
+            
+                
+        write('/app/files/sample.wav', 16000, buffer)
+        
+        audio_buffer=np.array([]).astype(np.int16)
+        
+        stt_files  = {'file': open('/app/files/sample.wav', 'rb')} 
+        
+        form = {
+            "temperature":"0.0",
+            "temperature_inc":"0.2",
+            "response_format":"json"
+        }
+        
+        stt_response = requests.post(STT_URL,files = stt_files,data = form)
+        
+        print(stt_response.status_code)
+        print(stt_response.text)
+        # run Speech to Text
+                
         # run chatbot
         
         # run piper tts
