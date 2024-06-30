@@ -2,11 +2,17 @@ import pyaudio
 import numpy as np
 import requests
 import webrtcvad
+from piper.voice import PiperVoice
+
 from scipy.io.wavfile import write
 import scipy.signal as sps
+import librosa
 
 import json
 
+
+import threading
+import queue
 import os
 
 SAMPLE_RATE=int(os.environ.get("SAMPLE_RATE"))
@@ -99,7 +105,7 @@ class Speaker:
         self.chunk=chunk
 
     def put(self,sample:np.array):
-        self.stream.write(sample,len(sample),exception_on_overflow = False)
+        self.stream.write(sample,len(sample))
 
     '''Close current stream'''
     def close_stream(self):
@@ -142,16 +148,50 @@ def resample_to_16(clip):
 
     return clip.astype(np.int16)
 
+def resample_from_to(clip,input_sample_rate,output_sample_rate):
+    
+    #number_of_samples = round(len(clip) * float(output_sample_rate) / input_sample_rate)
+
+    #clip = sps.resample(clip, number_of_samples)
+
+    return librosa.resample(clip,input_sample_rate,output_sample_rate)
+
 
 def create_prompt(prompt):
     
     return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT,prompt)
 
-
-
 mic=Microphone(CHUNK_SIZE)
 
-speaker=Speaker(CHUNK_SIZE)    
+
+tts = PiperVoice.load("/app/tts/model.onnx")
+
+print("Voice configs:")
+print(tts.config)
+
+speaker=Speaker(CHUNK_SIZE)#,rate=tts.config.sample_rate)    
+
+tts_queue = queue.Queue(10)
+
+def piper_task():
+    
+    while True:
+        
+        message = tts_queue.get()
+        
+        if type(message) is not str:
+            continue
+        
+        for audio in tts.synthesize_stream_raw(message):
+            audio_int = np.frombuffer(audio,dtype=np.int16)
+            
+            # I have problem with resampling
+            audio_int = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
+            
+            speaker.put(audio_int)
+        # do piper shit
+            
+
 
 audio_buffer=np.array([]).astype(np.int16)
 
@@ -168,6 +208,11 @@ print("Starting service")
 
 #iter = 0
 
+piper_thread = threading.Thread(target=piper_task)
+
+piper_thread.start()
+
+message=""
 
 while True:
     
@@ -224,7 +269,10 @@ while True:
         print(stt_response.status_code)
         print(stt_response.text)
         
-        prompt_text = stt_response.text
+        if stt_response.status_code != 200:
+            continue
+        
+        prompt_text = json.loads(stt_response.text)["text"]
                 
         # run chatbot
         if len(prompt_text)>0:
@@ -249,6 +297,11 @@ while True:
                         if frame["content"] == '\n' or frame["stop"]:
                             print(message)
                             # play message and run piper tts
+                            #tts_queue.put(message)
+                            for audio in tts.synthesize_stream_raw(message):
+                                audio_int = np.frombuffer(audio,dtype=np.int16)
+            
+                                speaker.put(audio_int)
                             message=""
                     except Exception as e:
                         print(str(e))

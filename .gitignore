@@ -1,2 +1,4 @@
 chatbot/models/*
 stt/models/*
+client/tts/*
+client/stt/*
