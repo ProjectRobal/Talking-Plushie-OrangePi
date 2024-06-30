@@ -5,7 +5,7 @@ import webrtcvad
 from scipy.io.wavfile import write
 import scipy.signal as sps
 
-import time
+import json
 
 import os
 
@@ -23,6 +23,10 @@ AUDIO_BUFFER_PATH="/app/files/audio.wav"
 
 STT_URL = "http://stt:8080/inference"
 
+CHATBOT_URL = "http://chat:8080/completion"
+
+SYSTEM_PROMPT = "You are famous Vocaloid called IA. Your sister is another vocaloid called ONE. You come from a planet ARIA."
+
 class Microphone:
     def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=SAMPLE_RATE,id=DEVICE_MIC_ID):
 
@@ -33,7 +37,7 @@ class Microphone:
         '''vad initialization'''
 
         self.vad=webrtcvad.Vad()
-        self.vad.set_mode(2)
+        self.vad.set_mode(3)
 
     '''Change vad aggresive level'''
     def vad_mode(self,mode):
@@ -134,9 +138,16 @@ def resample_to_16(clip):
     
     number_of_samples = round(len(clip) * float(16000) / SAMPLE_RATE)
 
-    clip = sps.resample(clip, number_of_samples).astype(np.int16)
+    clip = sps.resample(clip, number_of_samples)
 
-    return clip
+    return clip.astype(np.int16)
+
+
+def create_prompt(prompt):
+    
+    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT,prompt)
+
+
 
 mic=Microphone(CHUNK_SIZE)
 
@@ -145,24 +156,35 @@ speaker=Speaker(CHUNK_SIZE)
 audio_buffer=np.array([]).astype(np.int16)
 
 recording=False
+
+if os.path.exists('/app/files/sample.wav'):
+    print("Found old buffor removing it!")
+    os.remove('/app/files/sample.wav')
+
+if not os.path.exists('/app/files'):
+    os.mkdir('/app/files')
         
-        
+print("Starting service")
+
+#iter = 0
+
+
 while True:
     
     # get audio sample
     audio_input=mic.get()
-    
+        
     if audio_input is not None and len(audio_buffer)<MAX_BUFFER_SIZE:
         recording=True
         # append to audio buffer
         audio_buffer = np.append(audio_buffer,audio_input)
+        print("Append audio to buffer!")
     elif recording:
         recording=False
         # push everything into wav file in ram disk
+        print("Sending everything to chatbot!")
         
         buffer = audio_buffer.astype(np.int16)
-        
-        
         
         buffer = resample_to_16(buffer)
 
@@ -170,13 +192,20 @@ while True:
         
         if audio_length < 1000:
             frames_to_add = 1000 - audio_length
+            print("To short adding frames: ",frames_to_add)
             
-            dummy_buff = np.zeros(int((frames_to_add+10/1000)*16000)).astype(np.int16)
+            dummy_buff = np.zeros(int(((frames_to_add+10)/1000)*16000)).astype(np.int16)
             
             buffer = np.append(buffer,dummy_buff)
             
-                
+            print("New buffor length: ",len(buffer))    
+        
+            
+        print("Buffer: ",buffer)
+        
         write('/app/files/sample.wav', 16000, buffer)
+        
+        #iter+=1
         
         audio_buffer=np.array([]).astype(np.int16)
         
@@ -188,13 +217,41 @@ while True:
             "response_format":"json"
         }
         
+        # run Speech to Text
+        
         stt_response = requests.post(STT_URL,files = stt_files,data = form)
         
         print(stt_response.status_code)
         print(stt_response.text)
-        # run Speech to Text
+        
+        prompt_text = stt_response.text
                 
         # run chatbot
+        if len(prompt_text)>0:
+            
+            prompt_data={
+                "prompt": create_prompt(prompt_text),
+                "stream":True,
+                "cache_prompt":True,
+                "n_keep":1024,
+                "stop":["USER:"]
+            }
+            
+            chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True)
+            
+            for chunk in chatbot_response.iter_lines(decode_unicode=True):
+                if chunk:
+                    try:
+                        chunk = chunk[5:]
+                        frame = json.loads(chunk)
+                        message+=frame["content"]
+                    
+                        if frame["content"] == '\n' or frame["stop"]:
+                            print(message)
+                            # play message and run piper tts
+                            message=""
+                    except Exception as e:
+                        print(str(e))
         
         # run piper tts
         
