@@ -6,13 +6,9 @@ from piper.voice import PiperVoice
 
 from scipy.io.wavfile import write
 import scipy.signal as sps
-import librosa
 
 import json
 
-
-import threading
-import queue
 import os
 
 SAMPLE_RATE=int(os.environ.get("SAMPLE_RATE"))

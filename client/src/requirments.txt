@@ -4,4 +4,3 @@ numpy
 pyaudio
 webrtcvad
 scipy
-librosa
