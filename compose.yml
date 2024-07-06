@@ -41,6 +41,7 @@ services:
    build: 
      context: ./client
      dockerfile: Dockerfile
+   restart: always
    tmpfs: 
     - /run/shared:size=100000
    volumes:

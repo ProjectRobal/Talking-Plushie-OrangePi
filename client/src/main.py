@@ -150,11 +150,13 @@ def resample_to_16(clip):
 
 def resample_from_to(clip,input_sample_rate,output_sample_rate):
     
-    #number_of_samples = round(len(clip) * float(output_sample_rate) / input_sample_rate)
+    number_of_samples = round(len(clip) * float(output_sample_rate) / input_sample_rate)
+    
+    print("Resample to: ",number_of_samples)
 
-    #clip = sps.resample(clip, number_of_samples)
+    clip = sps.resample(clip, number_of_samples)
 
-    return librosa.resample(clip,input_sample_rate,output_sample_rate)
+    return clip.astype(np.int16)
 
 
 def create_prompt(prompt):
@@ -169,29 +171,7 @@ tts = PiperVoice.load("/app/tts/model.onnx")
 print("Voice configs:")
 print(tts.config)
 
-speaker=Speaker(CHUNK_SIZE)#,rate=tts.config.sample_rate)    
-
-tts_queue = queue.Queue(10)
-
-def piper_task():
-    
-    while True:
-        
-        message = tts_queue.get()
-        
-        if type(message) is not str:
-            continue
-        
-        for audio in tts.synthesize_stream_raw(message):
-            audio_int = np.frombuffer(audio,dtype=np.int16)
-            
-            # I have problem with resampling
-            audio_int = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
-            
-            speaker.put(audio_int)
-        # do piper shit
-            
-
+speaker=Speaker(SAMPLE_RATE)#,rate=tts.config.sample_rate)    
 
 audio_buffer=np.array([]).astype(np.int16)
 
@@ -205,12 +185,6 @@ if not os.path.exists('/app/files'):
     os.mkdir('/app/files')
         
 print("Starting service")
-
-#iter = 0
-
-piper_thread = threading.Thread(target=piper_task)
-
-piper_thread.start()
 
 message=""
 
@@ -237,17 +211,11 @@ while True:
         
         if audio_length < 1000:
             frames_to_add = 1000 - audio_length
-            print("To short adding frames: ",frames_to_add)
             
             dummy_buff = np.zeros(int(((frames_to_add+10)/1000)*16000)).astype(np.int16)
             
             buffer = np.append(buffer,dummy_buff)
-            
-            print("New buffor length: ",len(buffer))    
-        
-            
-        print("Buffer: ",buffer)
-        
+                            
         write('/app/files/sample.wav', 16000, buffer)
         
         #iter+=1
@@ -282,7 +250,7 @@ while True:
                 "stream":True,
                 "cache_prompt":True,
                 "n_keep":1024,
-                "stop":["USER:"]
+                "stop":["USER:","ONE:"]
             }
             
             chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True)
@@ -300,12 +268,10 @@ while True:
                             #tts_queue.put(message)
                             for audio in tts.synthesize_stream_raw(message):
                                 audio_int = np.frombuffer(audio,dtype=np.int16)
+                                
+                                audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
             
-                                speaker.put(audio_int)
+                                speaker.put(audio_out)
                             message=""
                     except Exception as e:
                         print(str(e))
-        
-        # run piper tts
-        
-        # play sample
