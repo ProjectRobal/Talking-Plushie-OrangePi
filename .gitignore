@@ -2,3 +2,9 @@ chatbot/models/*
 stt/models/*
 client/tts/*
 client/stt/*
+rag/*
+tools/bin
+tools/include
+tools/lib
+tools/lib64
+tools/pyvenv.cfg
