@@ -161,7 +161,8 @@ def resample_from_to(clip,input_sample_rate,output_sample_rate):
     return clip.astype(np.int16)
 
 
-model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1")
+# it crash there I guess it cannot download models or something
+model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1",cache_dir="/app/embed/")
     
 qdrant = QdrantClient("http://rag:6333")
 

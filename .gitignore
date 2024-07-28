@@ -8,3 +8,5 @@ tools/include
 tools/lib
 tools/lib64
 tools/pyvenv.cfg
+tools/share/*
+client/embed/*

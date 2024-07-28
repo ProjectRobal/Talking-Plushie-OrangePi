@@ -3,13 +3,16 @@ version: '3.9'
 networks:
   internal:
     name: "infranet"
+  external:
+    name: "internet"
+    external: true
 
 services:
   chat:
     build: 
       context: ./chatbot
       dockerfile: Dockerfile
-    platform: linux/amd64
+    # platform: linux/amd64
     env_file:
       - ./chatbot/envs
     volumes:
@@ -55,6 +58,9 @@ services:
      context: ./client
      dockerfile: Dockerfile
    restart: always
+   depends_on:
+    rag:
+        condition: service_started
    tmpfs: 
     - /run/shared:size=100000
    volumes:
@@ -63,9 +69,11 @@ services:
      - /run/shared:/app/files
      #- ./test:/app/files
      - ./client/src/main.py:/app/main.py
+     - ./client/embed/:/app/embed/
    env_file:
      - ./client/envs
    devices:
      - /dev/snd:/dev/snd
    networks:
+    #  - external
      - internal
