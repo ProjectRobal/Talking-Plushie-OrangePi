@@ -7,9 +7,15 @@ from piper.voice import PiperVoice
 from scipy.io.wavfile import write
 import scipy.signal as sps
 
+from fastembed import TextEmbedding
+
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams,PointStruct
+
 import json
 
 import os
+
 
 SAMPLE_RATE=int(os.environ.get("SAMPLE_RATE"))
 
@@ -155,9 +161,33 @@ def resample_from_to(clip,input_sample_rate,output_sample_rate):
     return clip.astype(np.int16)
 
 
+model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1")
+    
+qdrant = QdrantClient("http://rag:6333")
+
+
+def retrive_arguments(prompt):
+    output=""
+    
+    query_vector=next(model.embed(prompt))
+    
+    search_result = qdrant.search(
+    collection_name="ia",
+    query_vector=query_vector,
+    limit=5
+    )
+    
+    for result in search_result:
+        payload = result.payload
+        output+=payload["text"]
+        
+    return output
+
+
 def create_prompt(prompt):
     
-    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT,prompt)
+    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT+retrive_arguments(prompt),prompt)
+
 
 mic=Microphone(CHUNK_SIZE)
 

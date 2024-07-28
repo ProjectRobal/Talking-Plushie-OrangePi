@@ -34,38 +34,38 @@ services:
     ports:
       - 6333:6333
 
-  # stt:
-  #   build: 
-  #     context: ./stt
-  #     dockerfile: Dockerfile
-  #   platform: linux/amd64
-  #   env_file:
-  #     - ./stt/envs
-  #   volumes:
-  #     - ./stt/models/ggml-tiny-q5_1.bin:/app/models/model.bin
-  #   networks:
-  #     - internal
-  #   expose:
-  #     - 8080:8080
-  #   ports:
-  #     - 8081:8080
+  stt:
+    build: 
+      context: ./stt
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file:
+      - ./stt/envs
+    volumes:
+      - ./stt/models/ggml-tiny-q5_1.bin:/app/models/model.bin
+    networks:
+      - internal
+    expose:
+      - 8080:8080
+    ports:
+      - 8081:8080
   
-  # client:
-  #  build: 
-  #    context: ./client
-  #    dockerfile: Dockerfile
-  #  restart: always
-  #  tmpfs: 
-  #   - /run/shared:size=100000
-  #  volumes:
-  #    - ./client/tts/en_GB-alan-low.onnx:/app/tts/model.onnx
-  #    - ./client/tts/en_GB-alan-low.onnx.json:/app/tts/model.onnx.json
-  #    - /run/shared:/app/files
-  #    #- ./test:/app/files
-  #    - ./client/src/main.py:/app/main.py
-  #  env_file:
-  #    - ./client/envs
-  #  devices:
-  #    - /dev/snd:/dev/snd
-  #  networks:
-  #    - internal
+  client:
+   build: 
+     context: ./client
+     dockerfile: Dockerfile
+   restart: always
+   tmpfs: 
+    - /run/shared:size=100000
+   volumes:
+     - ./client/tts/en_GB-alan-low.onnx:/app/tts/model.onnx
+     - ./client/tts/en_GB-alan-low.onnx.json:/app/tts/model.onnx.json
+     - /run/shared:/app/files
+     #- ./test:/app/files
+     - ./client/src/main.py:/app/main.py
+   env_file:
+     - ./client/envs
+   devices:
+     - /dev/snd:/dev/snd
+   networks:
+     - internal

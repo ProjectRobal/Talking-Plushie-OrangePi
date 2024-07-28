@@ -4,3 +4,5 @@ numpy
 pyaudio
 webrtcvad
 scipy
+qdrant-client
+fastembed
