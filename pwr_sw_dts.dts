@@ -1,0 +1,32 @@
+/dts-v1/;
+/plugin/;
+/ {
+    compatible = "allwinner,sun50i-h616";
+    fragment@0 {
+        target = <&pio>;
+        __overlay__ {
+            keypad_pins: keypad_pins {
+                allwinner,pins = "PH2";
+                allwinner,function = "gpio_in";
+                allwinner,pull = <1>;
+            };
+        };
+    };
+    fragment@1 {
+        target-path = "/";
+        __overlay__ {
+            gpio-keys {
+                compatible = "gpio-keys";
+                pinctrl-names = "default";
+                pinctrl-0 = <&keypad_pins>;
+
+                power_button {
+                    label = "GPIO Key Power";
+                    linux,code = <116>;
+                    gpios = <&pio 7 2 1>;
+                };
+            };
+        };
+    };
+
+};

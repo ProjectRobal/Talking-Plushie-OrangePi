@@ -16,8 +16,12 @@ services:
     env_file:
       - ./chatbot/envs
     volumes:
-      - ./chatbot/models/q4_0-orca-mini-3b.gguf:/app/models/model.gguf
+    #- ./chatbot/models/q4_0-orca-mini-3b.gguf:/app/models/model.gguf
     #  - ./chatbot/models/Lite-Mistral-150M-v2-Instruct-Q4_0.gguf:/app/models/model.gguf
+    # - ./chatbot/models/ggml-mambahermes-3b-q4_k.gguf:/app/models/model.gguf
+    - ./chatbot/models/tinyllama-1.1b-chat-v1.0.Q4_0.gguf:/app/models/model.gguf
+    #  - ./chatbot/models/mamba-130m.Q4_0.gguf:/app/models/model.gguf
+    - ./chatbot/prompt.txt:/app/prompt.txt
     networks:
       - internal
     expose:
@@ -27,7 +31,7 @@ services:
 
   rag:
     image: qdrant/qdrant
-    platform: linux/amd64
+    # platform: linux/amd64
     volumes:
       - ./rag:/qdrant/storage
     networks:
@@ -41,7 +45,7 @@ services:
     build: 
       context: ./stt
       dockerfile: Dockerfile
-    platform: linux/amd64
+    # platform: linux/amd64
     env_file:
       - ./stt/envs
     volumes:

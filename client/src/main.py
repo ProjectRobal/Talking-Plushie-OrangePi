@@ -162,32 +162,32 @@ def resample_from_to(clip,input_sample_rate,output_sample_rate):
 
 
 # it crash there I guess it cannot download models or something
-model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1",cache_dir="/app/embed/")
+#model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1",cache_dir="/app/embed/")
     
 qdrant = QdrantClient("http://rag:6333")
 
 
-def retrive_arguments(prompt):
-    output=""
+# def retrive_arguments(prompt):
+#     output=""
     
-    query_vector=next(model.embed(prompt))
+#     query_vector=next(model.embed(prompt))
     
-    search_result = qdrant.search(
-    collection_name="ia",
-    query_vector=query_vector,
-    limit=5
-    )
+#     search_result = qdrant.search(
+#     collection_name="ia",
+#     query_vector=query_vector,
+#     limit=5
+#     )
     
-    for result in search_result:
-        payload = result.payload
-        output+=payload["text"]
+#     for result in search_result:
+#         payload = result.payload
+#         output+=payload["text"]
         
-    return output
+#     return output
 
 
 def create_prompt(prompt):
     
-    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT+retrive_arguments(prompt),prompt)
+    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT,prompt)
 
 
 mic=Microphone(CHUNK_SIZE)
