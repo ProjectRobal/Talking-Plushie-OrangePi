@@ -62,9 +62,6 @@ services:
      context: ./client
      dockerfile: Dockerfile
    restart: always
-   depends_on:
-    rag:
-        condition: service_started
    tmpfs: 
     - /run/shared:size=100000
    volumes:
