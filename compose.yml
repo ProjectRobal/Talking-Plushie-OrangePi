@@ -68,8 +68,8 @@ services:
    tmpfs: 
     - /run/shared:size=100000
    volumes:
-     - ./client/tts/en_GB-alan-low.onnx:/app/tts/model.onnx
-     - ./client/tts/en_GB-alan-low.onnx.json:/app/tts/model.onnx.json
+     - ./client/tts/en_US-amy-low.onnx:/app/tts/model.onnx
+     - ./client/tts/en_US-amy-low.onnx.json:/app/tts/model.onnx.json
      - /run/shared:/app/files
      #- ./test:/app/files
      - ./client/src/main.py:/app/main.py

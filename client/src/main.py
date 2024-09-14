@@ -25,7 +25,7 @@ DEVICE_MIC_ID=int(os.environ.get("DEVICE_MIC_ID"))
 
 DEVICE_SPEAK_ID=int(os.environ.get("DEVICE_SPEAK_ID"))
 
-MAX_BUFFER_SIZE=480000
+MAX_BUFFER_SIZE=160000
 
 AUDIO_BUFFER_PATH="/app/files/audio.wav"
 
@@ -88,7 +88,7 @@ class Microphone:
 
 class Speaker:
 
-    def __init__(self,chunk,format=pyaudio.paInt16,channels=1,rate=SAMPLE_RATE,id=DEVICE_SPEAK_ID):
+    def __init__(self,chunk,format=pyaudio.paInt16,channels=2,rate=SAMPLE_RATE,id=DEVICE_SPEAK_ID):
 
         self.audio=pyaudio.PyAudio()
         self.open_stream(format,channels,rate,chunk,id)
@@ -107,7 +107,12 @@ class Speaker:
         self.chunk=chunk
 
     def put(self,sample:np.array):
-        self.stream.write(sample,len(sample))
+        
+        sample = np.repeat(sample,2)
+        # sample = np.append(sample,sample)
+        # print(*sample,sep='\n')
+        
+        self.stream.write(sample.tostring())
 
     '''Close current stream'''
     def close_stream(self):
@@ -164,7 +169,7 @@ def resample_from_to(clip,input_sample_rate,output_sample_rate):
 # it crash there I guess it cannot download models or something
 #model = TextEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1",cache_dir="/app/embed/")
     
-qdrant = QdrantClient("http://rag:6333")
+# qdrant = QdrantClient("http://rag:6333")
 
 
 # def retrive_arguments(prompt):
@@ -187,7 +192,7 @@ qdrant = QdrantClient("http://rag:6333")
 
 def create_prompt(prompt):
     
-    return "SYSTEM:{}\nUSER:{}\nIA:".format(SYSTEM_PROMPT,prompt)
+    return "{}</s>\n<|IA|>".format(prompt)
 
 
 mic=Microphone(CHUNK_SIZE)
@@ -198,7 +203,7 @@ tts = PiperVoice.load("/app/tts/model.onnx")
 print("Voice configs:")
 print(tts.config)
 
-speaker=Speaker(SAMPLE_RATE)#,rate=tts.config.sample_rate)    
+speaker=Speaker(CHUNK_SIZE)#,rate=tts.config.sample_rate)    
 
 audio_buffer=np.array([]).astype(np.int16)
 
@@ -231,8 +236,7 @@ while True:
         print("Sending everything to chatbot!")
         
         buffer = audio_buffer.astype(np.int16)
-        
-        buffer = resample_to_16(buffer)
+        # buffer = resample_to_16(buffer)
 
         audio_length = int(len(buffer)*1000/16000)
         
@@ -277,7 +281,7 @@ while True:
                 "stream":True,
                 "cache_prompt":True,
                 "n_keep":1024,
-                "stop":["USER:","ONE:"]
+                "stop":["</s>\n<|user>"]
             }
             
             chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True)
@@ -287,18 +291,19 @@ while True:
                     try:
                         chunk = chunk[5:]
                         frame = json.loads(chunk)
-                        message+=frame["content"]
+                        if len(frame["content"])>0 and frame["content"]!='\n':
+                            message+=frame["content"]
                     
                         if frame["content"] == '\n' or frame["stop"]:
-                            print(message)
-                            # play message and run piper tts
-                            #tts_queue.put(message)
-                            for audio in tts.synthesize_stream_raw(message):
-                                audio_int = np.frombuffer(audio,dtype=np.int16)
-                                
-                                audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
-            
-                                speaker.put(audio_out)
+                            print(bytes(message.encode()))
+                            if len(message)!=0:
+                                # play message and run piper tts
+                                #tts_queue.put(message)
+                                for msg in message.split('.'):
+                                    for audio in tts.synthesize_stream_raw(msg):
+                                        audio_int = np.frombuffer(audio,dtype=np.int16)
+                                        # audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
+                                        speaker.put(audio_int)
                             message=""
                     except Exception as e:
                         print(str(e))
