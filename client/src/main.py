@@ -192,7 +192,7 @@ def resample_from_to(clip,input_sample_rate,output_sample_rate):
 
 def create_prompt(prompt):
     
-    return "{}</s>\n<|IA|>".format(prompt)
+    return "<|user|>\n{}\n<|IA|>".format(prompt)
 
 
 mic=Microphone(CHUNK_SIZE)
@@ -281,7 +281,7 @@ while True:
                 "stream":True,
                 "cache_prompt":True,
                 "n_keep":1024,
-                "stop":["</s>\n<|user>"]
+                "stop":["\n<|user|>"]
             }
             
             chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True)
@@ -299,11 +299,11 @@ while True:
                             if len(message)!=0:
                                 # play message and run piper tts
                                 #tts_queue.put(message)
-                                for msg in message.split('.'):
-                                    for audio in tts.synthesize_stream_raw(msg):
-                                        audio_int = np.frombuffer(audio,dtype=np.int16)
-                                        # audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
-                                        speaker.put(audio_int)
-                            message=""
+                                for audio in tts.synthesize_stream_raw(message):
+                                    audio_int = np.frombuffer(audio,dtype=np.int16)
+                                    # audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
+                                    speaker.put(audio_int)
+                                message=""
+                                break
                     except Exception as e:
                         print(str(e))
