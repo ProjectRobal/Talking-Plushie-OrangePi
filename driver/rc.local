@@ -1,0 +1,6 @@
+
+. /home/orangepi/wm8960_0/bin/activate
+
+python3 /home/orangepi/wm8960_0/wm8960/main.py > /home/orangepi/wm8960_0/wm8960/logs
+
+exit 0
