@@ -23,6 +23,8 @@ To use models you have to download them and put them in models subfolders and th
 You need to have docker with docker compose installed onto device obviously after you get it you have to type docker compose build in terminal while beging 
 in project directory, then after a while type docker compose up to run containers or docker compose up -d to run it into background.
 
+Initial LLM prompt is located in chatbot/prompt.txt file. Feel free to modify it.
+
 ## Miscellaneous
 
 In driver directory I put script written in python to setup audio codec on board of the HAT module, it should be run on computer boot.
