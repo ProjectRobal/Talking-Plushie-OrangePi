@@ -1,4 +1,4 @@
-# IA Talk
+# Talking Plushie
 
 An project of making talking plushie driven by LLM model. Now it is running on Orange Pi Zero 2W computer with 4GB on board and ReSpeaker HAT with 2 microphones.
 
