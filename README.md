@@ -28,4 +28,32 @@ Initial LLM prompt is located in chatbot/prompt.txt file. Feel free to modify it
 ## Miscellaneous
 
 In driver directory I put script written in python to setup audio codec on board of the HAT module, it should be run on computer boot.
-In dts folder I put dts file used for setup I2S audio driver required by HAT. To run script on board I am using lines similar to in driver/rc.local.
+In dts folder I put dts file used for setup I2S audio driver required by HAT. To run script on bo!
+ard I am using lines similar to in driver/rc.local.
+
+
+## Pictures:
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/50500371-5b84-4d69-a6c8-6592ff9bd357" width="200" height="400" />
+
+<img src="https://github.com/user-attachments/assets/f25b0278-ed41-4ac2-bc32-8e1ffb67dc44" width="200" height="400" />
+
+<img src="https://github.com/user-attachments/assets/7a24128f-bd5b-4788-81a7-3f7d6b18fb14" width="200" height="400" />
+
+</p>
+
+<p align="center">
+
+<img src="https://github.com/user-attachments/assets/cc82e296-e3a6-4706-a611-9ec3e56f0ced" height="400" />
+
+</p>
+
+<p align="center">
+Plushie with my creations at Opolcon 2024 in Opole, Poland.
+</p>
+
+## Video demo:
+
+https://github.com/user-attachments/assets/3681f490-9656-416c-a514-5403f00ed4fd
+
