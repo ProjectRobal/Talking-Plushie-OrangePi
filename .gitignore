@@ -10,3 +10,5 @@ tools/lib64
 tools/pyvenv.cfg
 tools/share/*
 client/embed/*
+.vscode
+tools
