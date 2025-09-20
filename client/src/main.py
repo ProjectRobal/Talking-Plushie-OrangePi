@@ -233,7 +233,7 @@ while True:
     elif recording:
         recording=False
         # push everything into wav file in ram disk
-        print("Sending everything to chatbot!")
+        
         
         buffer = audio_buffer.astype(np.int16)
         # buffer = resample_to_16(buffer)
@@ -275,27 +275,33 @@ while True:
                 
         # run chatbot
         if len(prompt_text)>0:
+            print("Sending everything to chatbot!")
             
             prompt_data={
                 "prompt": create_prompt(prompt_text),
                 "stream":True,
-                "cache_prompt":True,
+                # "cache_prompt":True,
                 "n_keep":1024,
+                "n_predict":256,
                 "stop":["\n<|user|>"]
             }
             
-            chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True)
+            chatbot_response = requests.post(CHATBOT_URL,json = prompt_data,stream=True,timeout=15)
             
-            for chunk in chatbot_response.iter_lines(decode_unicode=True):
+            for chunk in chatbot_response.iter_lines(decode_unicode=True,delimiter='\n'):
                 if chunk:
                     try:
                         chunk = chunk[5:]
+                        # chunk.append('}')
                         frame = json.loads(chunk)
                         if len(frame["content"])>0 and frame["content"]!='\n':
                             message+=frame["content"]
                     
-                        if frame["content"] == '\n' or frame["stop"]:
-                            print(bytes(message.encode()))
+                        if '\n' in frame["content"] or frame["content"] == ',' or frame["content"] == '.'  or frame["stop"]:
+                            last_part = ""
+                            if '\n' in frame["content"]:
+                                last_part = frame["content"][2:]
+                            print("Recived message: ",bytes(message.encode()))
                             if len(message)!=0:
                                 # play message and run piper tts
                                 #tts_queue.put(message)
@@ -304,6 +310,9 @@ while True:
                                     # audio_out = resample_from_to(audio_int,tts.config.sample_rate,SAMPLE_RATE)
                                     speaker.put(audio_int)
                                 message=""
+                                message += last_part
+                                
+                            if frame["stop"]:
                                 break
                     except Exception as e:
                         print(str(e))
